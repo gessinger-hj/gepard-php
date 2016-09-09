@@ -15,18 +15,28 @@ class Client {
 
     $this->socket_handle = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
     if(!socket_connect($this->socket_handle, $host, $port)) {
-      throw new \Exception("Socket connetion to ".$host.":".$port." unsuccessful");
+      throw new \Exception("Socket connection to ".$host.":".$port." unsuccessful");
     }
-
-    //$dummy = '{"className":"Event","name":"ALARM","type":"TEST","user":{"className":"User","id":"smith","key":4711,"_pwd":"secret","rights":{"CAN_READ_FILES":"*.docx"},"groups":{},"attributes":{}},"control":{"createdAt":{"type":"Date","value":"2016-09-09T08:12:46.096Z"},"plang":"JavaScript","hostname":"Neuromancer.fritz.box"},"body":{"binaryData":{"type":"Buffer","data":[65,66,67,68,69]}}}';
-
-    $dummy = '{"className":"Event","name":"getFileList","type":"","user":{"className":"User","id":"Paul","rights":{},"groups":{},"attributes":{}},"control":{"createdAt":{"type":"Date","value":"2016-09-09T08:45:27.132Z"},"plang":"JavaScript","hostname":"Neuromancer.fritz.box","_isResultRequested":true,"isInUse":true},"body":{}}';
-
-    socket_write($this->socket_handle, $dummy);
 
   }
 
-  function listen($event_name, $block = true) {
+  function emit(Event $event) {
+      socket_write($this->socket_handle, $event->toJSON());
+  }
+
+  function request($name, array $body = [], $block = true) {
+    $ev = new Event($name);
+    $ev->setBody($body);
+  
+    $ev->setResultRequested();
+
+    $this->emit($ev);
+
+    $ev = $this->listen($block);
+    return $ev;
+  }
+
+  function listen($block = true) {
     $char = "";
     $buffer = "";
 
@@ -36,16 +46,11 @@ class Client {
     while(true) {
      
       socket_recv($this->socket_handle, $char, 1, $flag);
-
-      //echo "CHAR: ".$char.PHP_EOL;
-      //echo "LEVEL: ".$levels.PHP_EOL;
-        
+ 
       if($char === "{") {
-        //echo "ONE DOWN".PHP_EOL;
         $levels++;
       }
       elseif($char === "}") {
-        //echo "ONE UP".PHP_EOL;
         $levels--;
       }
 
@@ -57,7 +62,8 @@ class Client {
 
     }
 
-    return $buffer;
+    $ev = Event::fromJSON($buffer);
+    return $ev;
   }
 
 }
