@@ -37,6 +37,10 @@ class Event implements \JsonSerializable {
     $this->control["_isResultRequested"] = $value;
   }
 
+  public function isResultRequested() {
+    return $this->control["_isResultRequested"];
+  }
+
   public function setName($name) {
     if(!is_string($name)) {
       throw new \InvalidArgumentException("name must be a string");
