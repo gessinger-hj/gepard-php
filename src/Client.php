@@ -8,8 +8,6 @@ class Client {
   protected $port;
 
   function __construct($port = 17501, $host = "localhost") {
-    echo "connecting to socket at ".$host.":".$port.PHP_EOL; 
-
     $this->host = $host;
     $this->port = $port;
 
