@@ -30,7 +30,7 @@ class Event implements \JsonSerializable {
 
     $this->control["createdAt"] = new \DateTime();
     $this->control["plang"] = "PHP";
-    $this->body = [];
+    $this->body = $body;
   }
 
   public function setResultRequested($value = true) {
@@ -38,6 +38,9 @@ class Event implements \JsonSerializable {
   }
 
   public function isResultRequested() {
+    if(!isset($this->control["_isResultRequested"])) {
+      $this->control["_isResultRequested"] = false;
+    }
     return $this->control["_isResultRequested"];
   }
 
