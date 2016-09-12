@@ -10,9 +10,6 @@ use AspectMock\Test as test;
 class ClientTest extends \PHPUnit_Framework_TestCase {
 
   use PHPMock;
-  protected function tearDown()  {
-    test::clean(); // remove all registered test doubles
-  }
 
   public function getClient() {
     $socket_create = $this->getFunctionMock(__NAMESPACE__, "socket_create");
