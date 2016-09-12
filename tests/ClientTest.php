@@ -5,17 +5,23 @@ use Gepard\Client;
 use Gepard\Event;
 use phpmock\phpunit\PHPMock;
 use phpmock\MockBuilder;
+use AspectMock\Test as test;
 
 class ClientTest extends \PHPUnit_Framework_TestCase {
 
   use PHPMock;
+  protected function tearDown()  {
+    test::clean(); // remove all registered test doubles
+  }
 
   public function getClient() {
-    $socket_create = $this->getFunctionMock(__NAMESPACE__, "socket_create");
-    $socket_create->expects($this->once())->willReturn("HANDLE");
-    $socket_connect = $this->getFunctionMock(__NAMESPACE__, "socket_connect");
-    $socket_connect->expects($this->once())->willReturn(true);
+    $create = test::func("Gepard", "socket_create", "HANDLE");
+    $connect = test::func("Gepard", "socket_connect", true);
     $cl = new Client();
+    $create->verifyInvoked();
+    $connect->verifyInvoked();
+    
+
     return $cl;
   }
 
@@ -27,33 +33,27 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
    * @expectedException \Exception
    */
   public function testCreateFailure() {
-    $socket_create = $this->getFunctionMock(__NAMESPACE__, "socket_create");
-    $socket_create->expects($this->once())->willReturn("HANDLE");
-    $socket_connect = $this->getFunctionMock(__NAMESPACE__, "socket_connect");
-    $socket_connect->expects($this->once())->willReturn(false);
-
+    $create = test::func("Gepard", "socket_create", "HANDLE");
+    $connect = test::func("Gepard", "socket_connect", false);
     $cl = new Client();
+    $create->verifyInvoked();
+    $connect->verifyInvoked();
   }
 
   public function testEmit() {
     
     $cl = $this->getClient();
 
-    $socket_write = $this->getFunctionMock(__NAMESPACE__, "socket_write");
-    $socket_write->expects($this->once())->with($this->equalTo("HANDLE"), $this->equalTo("JSONDUMMY"));
+    $write = test::func("Gepard", "socket_write", "");
 
-    $event = $this->getMockBuilder("Gepard\Event")
-                  ->disableOriginalConstructor()
-                  ->setMethods(array("toJSON", "__construct"))
-                  ->getMock();
-
-    $event->expects($this->once())
-          ->method("toJSON")
-          ->willReturn("JSONDUMMY");
-
+    $event = new Event("");
+    $event_proxy = test::double($event, ["toJSON" => "JSONDUMMY"]);
 
     $cl->emit($event);
-  
+    
+    $event_proxy->verifyInvoked("toJSON");
+    $write->verifyInvoked(["HANDLE", "JSONDUMMY"]);
+
   }
 
   public function testRequest() {
@@ -62,12 +62,10 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
     $name = "EVENTNAME";
     $body = array("BODY" => "VALUE");
 
-    $write = '{"className":"Event","name":"EVENTNAME","type":"","control":{"createdAt":"2016-09-10T18:37:59+0000","plang":"PHP","_isResultRequested":true},"body":{"BODY":"VALUE"}}';
+    $json = '{"className":"Event","name":"EVENTNAME","type":"","control":{"createdAt":"2016-09-10T18:37:59+0000","plang":"PHP","_isResultRequested":true},"body":{"BODY":"VALUE"}}';
+ 
+    $write = test::func("Gepard", "socket_write", "");
 
-    $socket_write = $this->getFunctionMock(__NAMESPACE__, "socket_write");
-    $socket_write->expects($this->once());
-
-    $json = $write;
     $i = 0;
 
     $builder = new MockBuilder();
@@ -81,9 +79,12 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
     $env = $builder->build();
     $env->enable();
 
-    $res = $cl->request($name , $body); 
+    $event = test::double("Gepard\Event", ["fromJSON" => "FAKE_JSON"]);
 
-    $this->assertEquals($res, $json);
+    $res = $cl->request($name , $body); 
+    $write->verifyInvoked();
+    $event->verifyInvoked('fromJSON');
+    $this->assertEquals($res, "FAKE_JSON");
      
   }
 }
