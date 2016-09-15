@@ -11,12 +11,18 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
 
   use PHPMock;
 
-  public function getClient() {
-    $socket_create = $this->getFunctionMock(__NAMESPACE__, "socket_create");
-    $socket_create->expects($this->once())->willReturn("HANDLE");
-    $socket_connect = $this->getFunctionMock(__NAMESPACE__, "socket_connect");
-    $socket_connect->expects($this->once())->willReturn(true);
-    $cl = new Client();
+  public function getClient($data = "", $event_factory = null) {
+    $socket = new MockSocket($data); 
+    $factory = $this->getMockBuilder("\Socket\Raw\Factory")
+                    ->disableOriginalConstructor()
+                    ->setMethods(["createClient"])
+                    ->getMock();
+    
+    $factory->expects($this->once())
+            ->method("createClient")
+            ->willReturn($socket);
+    
+    $cl = new Client("localhost", 4332, $factory, $event_factory);
     return $cl;
   }
 
@@ -25,23 +31,28 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
   }
 
   /**
-   * @expectedException \Exception
+   * @expectedException \Socket\Raw\Exception
    */
   public function testCreateFailure() {
-    $socket_create = $this->getFunctionMock(__NAMESPACE__, "socket_create");
-    $socket_create->expects($this->once())->willReturn("HANDLE");
-    $socket_connect = $this->getFunctionMock(__NAMESPACE__, "socket_connect");
-    $socket_connect->expects($this->once())->willReturn(false);
-
     $cl = new Client();
   }
 
   public function testEmit() {
-    
-    $cl = $this->getClient();
+    $socket = $this->getMockBuilder("\Socket\Raw\Socket")
+                   ->disableOriginalConstructor()
+                   ->setMethods(["write"])
+                   ->getMock();
 
-    $socket_write = $this->getFunctionMock(__NAMESPACE__, "socket_write");
-    $socket_write->expects($this->once())->with($this->equalTo("HANDLE"), $this->equalTo("JSONDUMMY"));
+    $socket->expects($this->once())->method("write")->with("JSONDUMMY");
+
+    $factory = $this->getMockBuilder("\Socket\Raw\Factory")
+                    ->disableOriginalConstructor()
+                    ->setMethods(["createClient"])
+                    ->getMock();
+    
+    $factory->expects($this->once())
+            ->method("createClient")
+            ->willReturn($socket);
 
     $event = $this->getMockBuilder("Gepard\Event")
                   ->disableOriginalConstructor()
@@ -52,46 +63,74 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
           ->method("toJSON")
           ->willReturn("JSONDUMMY");
 
-
+    $cl = new Client(362, "localhost", $factory);
     $cl->emit($event);
   
   }
+  
+  public function testSetEventFactory() {
+    $cl = $this->getClient();
+    $cl->setEventFactory(new EventFactory());
+  }
+
+  public function testReadJSONBlock() {
+    $json = json_encode(["hallo" => "welt", "list" => ["one", "two", "three"]]);
+    $cl = $this->getClient($json);
+    $block = $cl->readJSONBlock();
+    $this->assertEquals($json, $block);
+  }
+
+  public function testListen() {
+    $factory = $this->getMockBuilder("Gepard\EventFactory")
+                    ->setMethods(["eventFromJSON"])
+                    ->getMock();
+
+    $evmock = $this->getMockBuilder("Gepard\Event")
+                   ->disableOriginalConstructor()
+                   ->setMethods(["getName"])
+                   ->getMock();
+
+    $json1 = '{"name": "event1"}';
+    $json2 = '{"name": "event2"}';
+    $json3 = '{"name": "event3"}';
+
+    $evmock->expects($this->at(0))->method("getName")->willReturn("event1");
+    $evmock->expects($this->at(1))->method("getName")->willReturn("event2");
+    //$evmock->expects($this->at(2))->method("getName")->willReturn("event3");
+
+    $factory->expects($this->at(0))->method("eventFromJSON")->with($json1)->willReturn($evmock);
+    $factory->expects($this->at(1))->method("eventFromJSON")->with($json2)->willReturn($evmock);
+
+    $json = $json1.$json2.$json3;
+
+    $cl = $this->getClient($json, $factory);
+
+    $cl->listen(["event2"]);
+  } 
+
+
+
 
   public function testRequest() {
-    $cl = $this->getClient();
 
     $name = "EVENTNAME";
     $body = array("BODY" => "VALUE");
 
     $json = '{"className":"Event","name":"EVENTNAME","type":"","control":{"createdAt":"2016-09-10T18:37:59+0000","plang":"PHP","_isResultRequested":true},"body":{"BODY":"VALUE"}}';
 
-    $socket_write = $this->getFunctionMock(__NAMESPACE__, "socket_write");
-    $socket_write->expects($this->once());
+    $ev = Event::fromJSON($json); 
 
-    $i = 0;
+    $factory = $this->getMockBuilder("Gepard\EventFactory")
+                    ->setMethods(["eventFromJSON"])
+                    ->getMock();
+    
+    $factory->expects($this->once())->method("eventFromJSON")->with($json)->willReturn($ev);
+    
+    $cl = $this->getClient($json, $factory);
 
-    $builder = new MockBuilder();
-    $builder->setNamespace(__NAMESPACE__)
-            ->setName("socket_recv")
-            ->setFunction(function($handle, &$buf, $flag) use (&$i, &$json) {
-              $ret = $json[$i];
-              $buf = $ret;
-              $i++;
-            });
-    $env = $builder->build();
-    $env->enable();
 
-    if(defined('HHVM_VERSION')) {
-      $res = $cl->request($name , $body);
-      $this->assertEquals($res, $json); 
-    }
-    else {
-      $event = test::double("Gepard\Event", ["fromJSON" => "FAKE_JSON"]);
-      $res = $cl->request($name , $body);
-      $event->verifyInvoked('fromJSON');
-      $this->assertEquals($res, "FAKE_JSON");
-      test::clean();  
-    }
 
+    $res = $cl->request($name , $body);
+    $this->assertEquals($ev, $res); 
   }
 }

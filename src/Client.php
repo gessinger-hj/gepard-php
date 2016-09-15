@@ -1,25 +1,39 @@
 <?php
 namespace Gepard;
+use \Socket\Raw\Factory as SocketFactory;
 
 class Client {
   
-  protected $socket_handle;
+  protected $socket;
   protected $host;
   protected $port;
+  protected $event_factory;
 
-  function __construct($port = 17501, $host = "localhost") {
+  function __construct($port = 17501, $host = "localhost", SocketFactory $socket_factory = null, EventFactory $event_factory = null) {
     $this->host = $host;
     $this->port = $port;
 
-    $this->socket_handle = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
-    if(!socket_connect($this->socket_handle, $host, $port)) {
-      throw new \Exception("Socket connection to ".$host.":".$port." unsuccessful");
+    if($socket_factory === null) {
+      $socket_factory = new SocketFactory();
     }
+
+    if($event_factory === null) {
+      $this->event_factory = new EventFactory();
+    }
+    else {
+      $this->event_factory = $event_factory;
+    }
+
+    $this->socket = $socket_factory->createClient($host.":".$port);
 
   }
 
+  public function setEventFactory(EventFactory $event_factory) {
+    $this->event_factory = $event_factory;
+  }
+
   function emit(Event $event) {
-      socket_write($this->socket_handle, $event->toJSON());
+      $this->socket->write($event->toJSON());
   }
 
   function request($name, array $body = [], $block = true) {
@@ -30,11 +44,12 @@ class Client {
 
     $this->emit($ev);
 
-    $ev = $this->listen($block);
+    $ev = $this->listen([$name], $block);
     return $ev;
   }
 
-  function listen($block = true) {
+  public function readJSONBlock($block = true) {
+
     $char = "";
     $buffer = "";
 
@@ -43,7 +58,7 @@ class Client {
     $levels = 0;
     while(true) {
      
-      socket_recv($this->socket_handle, $char, 1, $flag);
+      $char = $this->socket->read(1);
  
       if($char === "{") {
         $levels++;
@@ -60,8 +75,18 @@ class Client {
 
     }
 
-    $ev = Event::fromJSON($buffer);
-    return $ev;
+    return $buffer;
+  }
+
+  public function listen(array $events = []) {
+    while(true) { 
+      $ev = $this->event_factory->eventFromJSON($this->readJSONBlock());
+
+      if(in_array($ev->getName(), $events)) {
+        break;
+      }
+    }
+    return $ev; 
   }
 
 }
