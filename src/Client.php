@@ -89,4 +89,7 @@ class Client {
     return $ev; 
   }
 
+  public function on ( array $eventNames ) {
+    
+  }
 }
