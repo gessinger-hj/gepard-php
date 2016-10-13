@@ -5,43 +5,52 @@ namespace Gepard;
 use Hampel\Json\Json;
 use Hampel\Json\JsonException;
 
+use Gepard\JSAcc ;
 
 class Event implements \JsonSerializable {
 
   protected $name;
   protected $type;
   public $control = [];
+  private $_control ;
   protected $body = [];
-
+  private $_body ;
   const CLASSNAME = "Event";
 
   static function fromJSON($json) {
     $data = Json::decode($json, true);
-    $obj = new Event($data["name"], $data["type"]);
+    $obj = new Event($data["name"], null, $data["type"]);
     $obj->setBody($data["body"]);
     $obj->control = $data["control"];
     $obj->control["createdAt"] = \DateTime::createFromFormat(\DateTime::ISO8601, $obj->control["createdAt"]);
     return $obj;
   }
 
-  function __construct($name, $type = "", $body = []) {
+  function __construct ( $name, $body=null, $type="" ) {
+    if(!is_string($name)) {
+      throw new \InvalidArgumentException("name must be a string");
+    }
     $this->name = $name;
     $this->type = $type;
 
-    $this->control["createdAt"] = new \DateTime();
+    $this->control["createdAt"] = new \DateTime("now",new \DateTimeZone(date_default_timezone_get()));
     $this->control["plang"] = "PHP";
-    $this->body = $body;
+    if ( ! $body ) {
+      $this->body = [] ;
+    }
+    else {
+      $this->body = $body;
+    }
+    $this->_control = new JSAcc ( $this->control ) ;
+    $this->_body = new JSAcc ( $this->body ) ;
   }
 
   public function setResultRequested($value = true) {
-    $this->control["_isResultRequested"] = $value;
+    $this->_control->add ( "_isResultRequested", $value ) ;
   }
 
   public function isResultRequested() {
-    if(!isset($this->control["_isResultRequested"])) {
-      $this->control["_isResultRequested"] = false;
-    }
-    return $this->control["_isResultRequested"];
+    return $this->_control->value ( "_isResultRequested", false ) ;
   }
 
   public function setName($name) {
@@ -55,11 +64,22 @@ class Event implements \JsonSerializable {
     return $this->name;
   }
 
+  public function setType($type) {
+    if(!is_string($type)) {
+      throw new \InvalidArgumentException("type must be a string");
+    }
+    $this->type = $type;
+  }
+
+  public function getType() {
+    return $this->type;
+  }
+
   public function setBody(array $body) {
     $this->body = $body;
   }
 
-  public function getBody() {
+  public function &getBody() {
     return $this->body;
   }
 
@@ -89,5 +109,13 @@ class Event implements \JsonSerializable {
 
   public function toJSON() {
     return Json::encode($this);
+  }
+
+  public function &getValue ( $name ) {
+    return $this->_body->value ( $name ) ;
+  }
+
+  public function setValue ( $name, $value ) {
+    return $this->_body->add ( $name, $value ) ;
   }
 }
