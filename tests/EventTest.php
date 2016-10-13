@@ -9,11 +9,11 @@ class EventTest extends \PHPUnit_Framework_TestCase {
   use PHPMock;
 
   public function testConstruct() {
-    $ev = new Event("EVENTNAME", "EVENTTYPE", ["body"]); 
+    $ev = new Event("EVENTNAME", ["body"], "EVENTTYPE"); 
   }
 
   public function testToJson() {
-    $ev = new Event("EVENTNAME", "EVENTTYPE", ["body"]); 
+    $ev = new Event("EVENTNAME", ["body"], "EVENTTYPE"); 
     $dt = $ev->control["createdAt"];
     $ct = $dt->format(\DateTime::ISO8601);
 
@@ -67,7 +67,7 @@ class EventTest extends \PHPUnit_Framework_TestCase {
 
   public function testGetBody() {
     $body = ["key" => "IAMTHEBODY"];
-    $ev = new Event("NAME", "", $body);
+    $ev = new Event("NAME", $body, "");
     $this->assertEquals($body, $ev->getBody());
   }
 }
