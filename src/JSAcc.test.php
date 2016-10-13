@@ -27,4 +27,3 @@ $a->remove ( "M1/M2/N" ) ;
 echo ( $a->toJSON() ) ; echo ( "\n" ) ;
 $a->add ( "only/a/map" ) ;
 echo ( $a->toJSON() ) ; echo ( "\n" ) ;
-var_dump ( $m ) ;
