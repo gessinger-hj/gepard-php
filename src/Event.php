@@ -83,6 +83,12 @@ class Event implements \JsonSerializable {
     return $this->body;
   }
 
+  public function setUniqueId ( $uid ) {
+    $id = $this->_control->value ( "uniqueId" ) ;
+    if ( ! $id ) {
+      $this->_control->add ( "uniqueId", $uid ) ;
+    }
+  }
   public function __toString() {
     return $this->toJSON();
   }

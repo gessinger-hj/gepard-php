@@ -3,7 +3,8 @@ namespace Gepard;
 use \Socket\Raw\Factory as SocketFactory;
 
 class Client {
-  
+
+  private static $counter = 1 ;
   protected $socket;
   protected $host;
   protected $port;
@@ -25,7 +26,13 @@ class Client {
     }
 
     $this->socket = $socket_factory->createClient($host.":".$port);
+  }
 
+  public function getUniqueId() {
+    $address = "" ;
+    $port = -1 ;
+    socket_getpeername( $this->socket->getResource(), $address, $port ) ;
+    return gethostname() . "_" . $port . "_" . time() . "_" . Client::$counter ;
   }
 
   public function setEventFactory(EventFactory $event_factory) {
@@ -33,7 +40,9 @@ class Client {
   }
 
   function emit(Event $event) {
-      $this->socket->write($event->toJSON());
+    $uid = $this->getUniqueId() ;
+    $event->setUniqueId ( $uid ) ;
+    $this->socket->write($event->toJSON());
   }
 
   function request($name, array $body = [], $block = true) {

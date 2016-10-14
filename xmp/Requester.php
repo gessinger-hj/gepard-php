@@ -12,3 +12,7 @@ $result = $cl->request ( "getFileList" ) ;
 $body = $result->getBody() ;
 var_dump ( $body ) ;
 var_dump ( $result->getValue ( "file_list" ) ) ;
+
+$addr = "" ;
+$port = -1 ;
+socket_getsockname ( $this->socket, $addr, $port ) ;
