@@ -22,7 +22,9 @@ class Event implements \JsonSerializable {
     $obj = new Event($data["name"], null, $data["type"]);
     $obj->setBody($data["body"]);
     $obj->control = $data["control"];
-    $obj->control["createdAt"] = \DateTime::createFromFormat(\DateTime::ISO8601, $obj->control["createdAt"]);
+    if ( is_string ( $obj->control["createdAt"] ) ) {
+      $obj->control["createdAt"] = \DateTime::createFromFormat(\DateTime::ISO8601, $obj->control["createdAt"]);
+    }
     return $obj;
   }
 
@@ -33,7 +35,7 @@ class Event implements \JsonSerializable {
     $this->name = $name;
     $this->type = $type;
 
-    $this->control["createdAt"] = new \DateTime("now",new \DateTimeZone(date_default_timezone_get()));
+    $this->control["createdAt"] = new \DateTime();
     $this->control["plang"] = "PHP";
     if ( ! $body ) {
       $this->body = [] ;
@@ -83,6 +85,10 @@ class Event implements \JsonSerializable {
     return $this->body;
   }
 
+  public function &getControl() {
+    return $this->control;
+  }
+
   public function setUniqueId ( $uid ) {
     $id = $this->_control->value ( "uniqueId" ) ;
     if ( ! $id ) {
@@ -90,20 +96,21 @@ class Event implements \JsonSerializable {
     }
   }
   public function __toString() {
-    return $this->toJSON();
+      return $this->toJSON();
   }
 
   public function jsonSerialize() {
-
     $control = $this->control;
-
-    $control["createdAt"] = $control["createdAt"]->format(\DateTime::ISO8601);
-
+    $createdAt = $control["createdAt"] ;
+    if ( is_array ( $createdAt ) ) {
+      if ( $createdAt["type"] === "Date" ) {
+        $control["createdAt"] = $createdAt["value"] ;
+      }
+    }
     $body = $this->body;
     if(count($body) === 0) {
       $body = new \stdClass();
     }
-
     return [
       "className" => self::CLASSNAME,
       "name" => $this->name,
@@ -124,4 +131,36 @@ class Event implements \JsonSerializable {
   public function setValue ( $name, $value ) {
     return $this->_body->add ( $name, $value ) ;
   }
+
+  public function isBad()
+  {
+    $code = $this->getStatusCode() ;
+    return $code !== 0 ? true : false ;
+  }
+  public function &getStatus()
+  {
+    return $this->_control->value ( "status" ) ;
+  }
+  public function getStatusReason()
+  {
+    return $this->_control->value ( "status/reason", "" ) ;
+  }
+  public function getStatusName()
+  {
+    return $this->_control->value ( "status/name", "" ) ;
+  }
+  public function getStatusCode()
+  {
+    return $this->_control->value ( "status/code", 0 ) ;
+  }
+  public function setStatus ( $code, $name, $reason )
+  {
+    if ( ! $code ) {
+      $code = 0 ;
+    }
+    $this->_control->add ( "status/code", $code ) ;
+    if ( $name ) $this->_control->add ( "status/name", $name ) ;
+    if ( $reason ) $this->_control->add ( "status/reason", $reason ) ;
+  }
+
 }

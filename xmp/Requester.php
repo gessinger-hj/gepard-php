@@ -1,18 +1,13 @@
 #!/usr/bin/env php
 <?php
-
 namespace Gepard;
+
+error_reporting ( E_ALL ) ;
 
 require ( __DIR__ . '/../vendor/autoload.php' );
 
 use Gepard\Client;
 
 $cl = new Client();
-$result = $cl->request ( "getFileList" ) ;
-$body = $result->getBody() ;
-var_dump ( $body ) ;
-var_dump ( $result->getValue ( "file_list" ) ) ;
-
-$addr = "" ;
-$port = -1 ;
-socket_getsockname ( $this->socket, $addr, $port ) ;
+$e = $cl->request ( "getFileList" ) ;
+var_dump ( $e->getValue ( "file_list" ) ) ;
