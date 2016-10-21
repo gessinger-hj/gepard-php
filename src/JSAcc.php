@@ -56,7 +56,7 @@ class JSAcc {
   		}
       if ( $i == sizeof ( $plist ) - 1 )
       {
-        if ( $obj == null ) $obj = [] ;
+        if ( $obj === null ) $obj = [] ;
         $m[$p] = $obj ;
       }
 		}

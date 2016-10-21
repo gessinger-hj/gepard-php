@@ -127,6 +127,7 @@ class Client {
           continue ;
         }
       }
+      $ev->_Client = $this ;
       if(in_array($ev->getName(), $events)) {
         break;
       }
@@ -140,5 +141,14 @@ class Client {
     $this->emit ( $e ) ;
     // $ev = $this->listen ( $eventNameList ) ;
     // return $ev ;
+  }
+  public function sendResult ( $event ) {
+    if ( ! $event->isResultRequested() ) {
+      echo ( "No result requested:\n" ) ;
+      echo ( event ) ;
+      throw new \InvalidArgumentException ( "No result requested" ) ;
+    }
+    $event->setIsResult() ;
+    $this->socket->write($event->toJSON());
   }
 }

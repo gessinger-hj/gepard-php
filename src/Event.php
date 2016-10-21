@@ -15,6 +15,7 @@ class Event implements \JsonSerializable {
   private $_control ;
   protected $body = [];
   private $_body ;
+  public $_Client ;
   const CLASSNAME = "Event";
 
   static function fromJSON($json) {
@@ -45,6 +46,14 @@ class Event implements \JsonSerializable {
     }
     $this->_control = new JSAcc ( $this->control ) ;
     $this->_body = new JSAcc ( $this->body ) ;
+  }
+
+  public function setIsResult() {
+    $this->_control->add ( "_isResult", True ) ;
+  }
+
+  public function isResult() {
+    return $this->_control->value ( "_isResult", false ) ;
   }
 
   public function setResultRequested($value = true) {
@@ -96,7 +105,10 @@ class Event implements \JsonSerializable {
     }
   }
   public function __toString() {
-      return $this->toJSON();
+    // return $this->toJSON();
+    ob_start();
+    var_dump($this->jsonSerialize());
+    return ob_get_clean();
   }
 
   public function jsonSerialize() {
@@ -162,5 +174,8 @@ class Event implements \JsonSerializable {
     if ( $name ) $this->_control->add ( "status/name", $name ) ;
     if ( $reason ) $this->_control->add ( "status/reason", $reason ) ;
   }
-
+  public function sendBack() {
+    $this->_Client->sendResult ( $this ) ;
+    $this->_Client = null ;
+  }
 }
