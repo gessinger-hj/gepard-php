@@ -13,7 +13,8 @@ class Client {
   protected $version = 1 ;
   protected $brokerVersion = 0 ;
   protected $_heartbeatIntervalMillis = 30000 ;
-
+  protected $_callbacks = [] ;
+  protected $_listener = [] ;
   function __construct($port = 17501, $host = "localhost", SocketFactory $socket_factory = null, EventFactory $event_factory = null) {
     $this->host = $host;
     $this->port = $port;
@@ -126,8 +127,18 @@ class Client {
           $this->emit ( $ev ) ;
           continue ;
         }
+        if ( $ev->getType() === "shutdown" ) {
+          if (isset($this->_callbacks["shutdown"])) {
+            $this->_callbacks["shutdown"] ( $ev ) ;
+          }
+          return $ev ;
+        }
       }
       $ev->_Client = $this ;
+      if (isset($this->_listener[$ev->getName()])) {
+        $this->_listener[$ev->getName()] ( $ev ) ;
+        continue ;
+      }
       if(in_array($ev->getName(), $events)) {
         break;
       }
@@ -135,17 +146,28 @@ class Client {
     return $ev; 
   }
 
-  public function on ( array $eventNameList ) {
+  public function on ( $eventNameList, $callback=null ) {
+    if ( is_string($eventNameList)) {
+      if ($eventNameList === 'shutdown') {
+        if ( ! $callback ) {
+          throw new \InvalidArgumentException ( "Missing callback for event: '" . "'" ) ;
+        }
+        $this->_callbacks[$eventNameList] = $callback ;
+        return ;
+      }
+      $eventNameList = [ $eventNameList ] ;
+    }
+    if ( ! is_array($eventNameList) ) {
+          throw new \InvalidArgumentException ( "$eventNameList must be an array of strings." ) ;
+    }
     $e = new Event ( "system", null, "addEventListener" ) ;
     $e->setValue ( "eventNameList", $eventNameList ) ;
     $this->emit ( $e ) ;
-    // $ev = $this->listen ( $eventNameList ) ;
-    // return $ev ;
   }
   public function sendResult ( $event ) {
     if ( ! $event->isResultRequested() ) {
       echo ( "No result requested:\n" ) ;
-      echo ( event ) ;
+      echo ( $event ) ;
       throw new \InvalidArgumentException ( "No result requested" ) ;
     }
     $event->setIsResult() ;

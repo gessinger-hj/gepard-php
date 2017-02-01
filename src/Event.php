@@ -115,7 +115,7 @@ class Event implements \JsonSerializable {
     $control = $this->control;
     $createdAt = $control["createdAt"] ;
     if ( is_array ( $createdAt ) ) {
-      if ( $createdAt["type"] === "Date" ) {
+      if ( isset ( $createdAt["type"] ) && $createdAt["type"] === "Date" ) {
         $control["createdAt"] = $createdAt["value"] ;
       }
     }
