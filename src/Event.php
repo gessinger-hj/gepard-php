@@ -20,10 +20,18 @@ class Event implements \JsonSerializable {
 
   static function fromJSON($json) {
     $data = Json::decode($json, true);
-    $obj = new Event($data["name"], null, $data["type"]);
+    $name = "" ;
+    if (isset($data["name"])) {
+      $name = $data["name"] ;
+    }
+    $type = null ;
+    if (isset($data["type"])) {
+      $type = $data["type"] ;
+    }
+    $obj = new Event($name, null, $type);
     $obj->setBody($data["body"]);
     $obj->control = $data["control"];
-    if ( is_string ( $obj->control["createdAt"] ) ) {
+    if ( isset ( $obj->control["createdAt"] ) ) {
       $obj->control["createdAt"] = \DateTime::createFromFormat(\DateTime::ISO8601, $obj->control["createdAt"]);
     }
     return $obj;

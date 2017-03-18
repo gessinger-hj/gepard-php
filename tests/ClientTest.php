@@ -22,7 +22,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
             ->method("createClient")
             ->willReturn($socket);
     
-    $cl = new Client("localhost", 4332, $factory, $event_factory);
+    $cl = new Client(4332, "localhost", $factory, $event_factory);
     return $cl;
   }
 
@@ -63,7 +63,7 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
           ->method("toJSON")
           ->willReturn("JSONDUMMY");
 
-    $cl = new Client(362, "localhost", $factory);
+    $cl = new Client(4332, "localhost", $factory);
     $cl->emit($event);
   
   }

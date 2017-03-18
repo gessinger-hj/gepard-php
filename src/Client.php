@@ -57,7 +57,12 @@ class Client {
   public function getUniqueId() {
     $address = "" ;
     $port = -1 ;
-    socket_getpeername( $this->socket->getResource(), $address, $port ) ;
+    $res = $this->socket->getResource() ;
+    if ( ! $res) {
+      $uid = $this->port . "_" . time() . "_" . Client::$counter ;
+      return $uid ;
+    }
+    socket_getpeername( $res, $address, $port ) ;
     return gethostname() . "_" . $port . "_" . time() . "_" . Client::$counter ;
   }
 
@@ -106,9 +111,11 @@ class Client {
       if($levels === 0) {
         break;
       }
-
     }
-
+echo "-----$buffer---\n" ;
+    if (strlen($buffer) === 0) {
+      throw new \UnexpectedValueException ( "Empty string read from socket." ) ;
+    }
     return $buffer;
   }
 
