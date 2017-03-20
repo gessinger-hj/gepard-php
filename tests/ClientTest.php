@@ -73,43 +73,40 @@ class ClientTest extends \PHPUnit_Framework_TestCase {
     $cl->setEventFactory(new EventFactory());
   }
 
-  public function testReadJSONBlock() {
-    $json = json_encode(["hallo" => "welt", "list" => ["one", "two", "three"]]);
-    $cl = $this->getClient($json);
-    $block = $cl->readJSONBlock();
-    $this->assertEquals($json, $block);
-  }
+  // public function testReadJSONBlock() {
+  //   $json = json_encode(["hallo" => "welt", "list" => ["one", "two", "three"]]);
+  //   $cl = $this->getClient($json);
+  //   $block = $cl->readJSONBlock();
+  //   $this->assertEquals($json, $block);
+  // }
 
-  public function testListen() {
-    $factory = $this->getMockBuilder("Gepard\EventFactory")
-                    ->setMethods(["eventFromJSON"])
-                    ->getMock();
+  // public function testListen() {
+  //   $factory = $this->getMockBuilder("Gepard\EventFactory")
+  //                   ->setMethods(["eventFromJSON"])
+  //                   ->getMock();
 
-    $evmock = $this->getMockBuilder("Gepard\Event")
-                   ->disableOriginalConstructor()
-                   ->setMethods(["getName"])
-                   ->getMock();
+  //   $evmock = $this->getMockBuilder("Gepard\Event")
+  //                  ->disableOriginalConstructor()
+  //                  ->setMethods(["getName"])
+  //                  ->getMock();
 
-    $json1 = '{"name": "event1"}';
-    $json2 = '{"name": "event2"}';
-    $json3 = '{"name": "event3"}';
+  //   $json1 = '{"name": "event1"}';
+  //   $json2 = '{"name": "event2"}';
+  //   $json3 = '{"name": "event3"}';
 
-    $evmock->expects($this->at(0))->method("getName")->willReturn("event1");
-    $evmock->expects($this->at(1))->method("getName")->willReturn("event2");
-    //$evmock->expects($this->at(2))->method("getName")->willReturn("event3");
+  //   $evmock->expects($this->at(0))->method("getName")->willReturn("event1");
+  //   $evmock->expects($this->at(1))->method("getName")->willReturn("event2");
+  //   //$evmock->expects($this->at(2))->method("getName")->willReturn("event3");
 
-    $factory->expects($this->at(0))->method("eventFromJSON")->with($json1)->willReturn($evmock);
-    $factory->expects($this->at(1))->method("eventFromJSON")->with($json2)->willReturn($evmock);
+  //   $factory->expects($this->at(0))->method("eventFromJSON")->with($json1)->willReturn($evmock);
+  //   $factory->expects($this->at(1))->method("eventFromJSON")->with($json2)->willReturn($evmock);
 
-    $json = $json1.$json2.$json3;
+  //   $json = $json1.$json2.$json3;
 
-    $cl = $this->getClient($json, $factory);
+  //   $cl = $this->getClient($json, $factory);
 
-    $cl->listen(["event2"]);
-  } 
-
-
-
+  //   $cl->listen(["event2"]);
+  // } 
 
   public function testRequest() {
 

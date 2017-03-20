@@ -5,30 +5,25 @@ class MockSocket {
   protected $data;
   protected $pos = 0;
 
-  public function __construct($body) {
-echo "body=$body\n" ;
-if (strpos($body,"event1")>0) {
-  $e = new \Exception ;
-  var_dump($e->getTraceAsString());
-}
-    if (!$body OR !strpos ( $body, "className" ) ) {
+  public function __construct($data) {
+    if ( !$data OR !strpos ( $data, "body" ) )
+    {
       $dt = new \DateTime();
       $ct = $dt->format(\DateTime::ISO8601);
       // $ct = json_encode($dt);
-      $data = '{"className":"Event","name":"EVENTNAME","type":"EVENTTYPE","control":{"createdAt":"'.$ct.'","plang":"PHP"},"body":';
-      if (!$body) {
-        $data .= '{}';
+      $json = '{"className":"Event","name":"EVENTNAME","type":"EVENTTYPE","control":{"createdAt":"'.$ct.'","plang":"PHP"},"body":';
+      if (!$data) {
+        $json .= '{}';
       }
       else {
-        $data .= $body ;
+        $json .= $data ;
       }
-      $data .= '}';
-      $this->data = $data;
+      $json .= '}';
+      $this->data = $json;
     }
     else {
-      $this->data = $body;
+      $this->data = $data;
     }
-echo "data=$this->data\n" ;
   }
 
   public function read($length) {

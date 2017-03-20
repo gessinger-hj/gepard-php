@@ -112,9 +112,10 @@ class Client {
         break;
       }
     }
-echo "-----$buffer---\n" ;
     if (strlen($buffer) === 0) {
-      throw new \UnexpectedValueException ( "Empty string read from socket." ) ;
+      $e = new \UnexpectedValueException ( "Empty string read from socket." ) ;
+      var_dump($e->getTraceAsString());
+      throw $e ;
     }
     return $buffer;
   }
