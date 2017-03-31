@@ -113,19 +113,14 @@ class Event implements \JsonSerializable {
     }
   }
   public function __toString() {
-    // return $this->toJSON();
-    ob_start();
-    var_dump($this->jsonSerialize());
-    return ob_get_clean();
+    return $this->toJSON();
   }
 
   public function jsonSerialize() {
     $control = $this->control;
-    $createdAt = $control["createdAt"] ;
-    if ( is_array ( $createdAt ) ) {
-      if ( isset ( $createdAt["type"] ) && $createdAt["type"] === "Date" ) {
-        $control["createdAt"] = $createdAt["value"] ;
-      }
+    if (isset($control["createdAt"])) {
+      $createdAt = $control["createdAt"] ;
+      $control["createdAt"] = $createdAt->format(\DateTime::ISO8601);
     }
     $body = $this->body;
     if(count($body) === 0) {

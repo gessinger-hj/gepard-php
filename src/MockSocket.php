@@ -33,6 +33,9 @@ class MockSocket {
   }
 
   public function write($str) {
+echo "\n==================\n" ;
+echo "str=$str" ;
+echo "\n==================\n" ;
   }
 
   public function getResource() {
