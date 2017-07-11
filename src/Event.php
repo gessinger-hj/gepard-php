@@ -14,7 +14,7 @@ class Event implements \JsonSerializable {
   public $control = [];
   private $_control ;
   protected $body = [];
-  private $_body ;
+  public $_body ;
   public $_Client ;
   const CLASSNAME = "Event";
 
@@ -32,7 +32,20 @@ class Event implements \JsonSerializable {
     $obj->setBody($data["body"]);
     $obj->control = $data["control"];
     if ( isset ( $obj->control["createdAt"] ) ) {
-      $obj->control["createdAt"] = \DateTime::createFromFormat(\DateTime::ISO8601, $obj->control["createdAt"]);
+      $createdAt = $obj->control["createdAt"] ;
+      if (is_string($createdAt)) {
+        $obj->control['createdAt'] = \DateTime::createFromFormat(\DateTime::ATOM, $createdAt);
+        if ( ! $obj->control['createdAt'] ) {
+          $obj->control['createdAt'] = $createdAt ;
+        }
+      }
+      else
+      if ( isset ( $createdAt["value"] ) && is_string ( $createdAt["value"] ) ) {
+        $obj->control['createdAt'] = \DateTime::createFromFormat(\DateTime::ATOM, $createdAt["value"]);
+        if ( ! $obj->control['createdAt'] ) {
+          $obj->control['createdAt'] = $createdAt["value"] ;
+        }
+      }
     }
     return $obj;
   }
@@ -120,7 +133,14 @@ class Event implements \JsonSerializable {
     $control = $this->control;
     if (isset($control["createdAt"])) {
       $createdAt = $control["createdAt"] ;
-      $control["createdAt"] = $createdAt->format(\DateTime::ISO8601);
+      if (is_object($createdAt)) {
+        if ($createdAt instanceof \DateTime) {
+          $control["createdArmt"] = $createdAt->format(\DateTime::ATOM);
+        }
+        else {
+
+        }
+      }
     }
     $body = $this->body;
     if(count($body) === 0) {
@@ -136,7 +156,10 @@ class Event implements \JsonSerializable {
   }
 
   public function toJSON() {
-    return Json::encode($this);
+    $this->_body = null;
+    $this->_Client = null;
+    $se = Json::encode($this);
+    return $se;
   }
 
   public function &getValue ( $name ) {
