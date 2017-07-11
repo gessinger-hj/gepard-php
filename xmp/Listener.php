@@ -22,5 +22,5 @@ while ( true ) {
   	print ( "shutdown as requested.\n" ) ;
     break ;
   }
-  var_dump( $ev ) ;
+  echo( $ev ) ;
 }

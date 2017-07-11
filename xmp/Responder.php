@@ -9,7 +9,10 @@ use Gepard\Client;
 
 $cl = new Client();
 $eventNameList = ["getFileList"] ;
+
 $cl->on($eventNameList);
+$cl->on("shutdown");
+
 $fileList = [ "a.php", "b.php", "c.php" ] ;
 
 while ( true ) {
