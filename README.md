@@ -12,7 +12,7 @@ If you not yet have a composer.json create this file with the following content:
     "minimum-stability": "dev" 
 }
 ```
-If you alteady have this composer.json in your project-directory add the lines above.
+If this composer.json file already exists in your project-directory add the body-lines above.
 After this is done execute the command:
 ```bash
 composer install
