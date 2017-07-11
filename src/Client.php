@@ -73,7 +73,8 @@ class Client {
   function emit(Event $event) {
     $uid = $this->getUniqueId() ;
     $event->setUniqueId ( $uid ) ;
-    $this->socket->write($event->toJSON());
+    $se = $event->toJSON();
+    $this->socket->write($se);
   }
 
   function request($name, array $body = [], $block = true) {
@@ -122,7 +123,8 @@ class Client {
 
   public function listen(array $events = []) {
     while(true) {
-      $ev = $this->event_factory->eventFromJSON($this->readJSONBlock());
+      $se = $this->readJSONBlock() ;
+      $ev = $this->event_factory->eventFromJSON($se);
       if ( $ev->getName() === "system" ) {
         if ( $ev->getType() === "addEventListener" ) {
           if ( $ev->isBad() ) {

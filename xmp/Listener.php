@@ -3,7 +3,7 @@
 
 namespace Gepard;
 
-require ( __DIR__ . '/../vendor/autoload.php' );
+require ( 'vendor/autoload.php' );
 
 use Gepard\Client;
 
@@ -14,6 +14,7 @@ $cl->on ( 'shutdown', function($e) {
 }) ;
 
 $eventNameList = ["ALARM","BLARM"] ;
+echo ( "Listen for events with name=" . implode ( ',', $eventNameList ) . "\n" ) ;
 $cl->on($eventNameList);
 while ( true ) {
   $ev = $cl->listen ( $eventNameList ) ;
@@ -21,5 +22,5 @@ while ( true ) {
   	print ( "shutdown as requested.\n" ) ;
     break ;
   }
-  echo ( $ev ) ;
+  var_dump( $ev ) ;
 }
