@@ -160,7 +160,7 @@ class Client {
     if ( is_string($eventNameList)) {
       if ($eventNameList === 'shutdown') {
         if ( ! $callback ) {
-          throw new \InvalidArgumentException ( "Missing callback for event: '" . "'" ) ;
+          throw new \InvalidArgumentException ( "Missing callback for event: '$eventNameList'" ) ;
         }
         $this->_callbacks[$eventNameList] = $callback ;
         return ;
@@ -168,7 +168,7 @@ class Client {
       $eventNameList = [ $eventNameList ] ;
     }
     if ( ! is_array($eventNameList) ) {
-          throw new \InvalidArgumentException ( "$eventNameList must be an array of strings." ) ;
+      throw new \InvalidArgumentException ( "$eventNameList must be an array of strings." ) ;
     }
     $e = new Event ( "system", null, "addEventListener" ) ;
     $e->setValue ( "eventNameList", $eventNameList ) ;
