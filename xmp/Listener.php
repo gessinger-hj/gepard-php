@@ -15,12 +15,9 @@ $cl->on ( 'shutdown', function($e) {
 
 $eventNameList = ["ALARM","BLARM"] ;
 echo ( "Listen for events with name=" . implode ( ',', $eventNameList ) . "\n" ) ;
-$cl->on($eventNameList);
-while ( true ) {
-  $ev = $cl->listen ( $eventNameList ) ;
-  if ( $ev->getType() === "shutdown" ) {
-  	print ( "shutdown as requested.\n" ) ;
-    break ;
-  }
-  echo( $ev ) ;
-}
+
+$cl->on($eventNameList, function($e) {
+	echo($e);
+});
+
+$cl->listen() ;

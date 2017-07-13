@@ -126,7 +126,19 @@ class Event implements \JsonSerializable {
     }
   }
   public function __toString() {
-    return $this->toJSON();
+    ob_start();
+    $_control = $this->_control;
+    $_body = $this->_body;
+    $_Client = $this->_Client;
+    $this->_control = null;
+    $this->_body = null;
+    $this->_Client = null;
+    var_dump($this);
+    $s = "(Event)\n" . ob_get_clean();
+    $this->_body = $_control;
+    $this->_body = $_body;
+    $this->_Client = $_Client;
+    return $s;
   }
 
   public function jsonSerialize() {
@@ -135,7 +147,7 @@ class Event implements \JsonSerializable {
       $createdAt = $control["createdAt"] ;
       if (is_object($createdAt)) {
         if ($createdAt instanceof \DateTime) {
-          $control["createdArmt"] = $createdAt->format(\DateTime::ATOM);
+          $control["createdAt"] = $createdAt->format(\DateTime::ATOM);
         }
         else {
 

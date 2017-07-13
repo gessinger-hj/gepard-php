@@ -14,10 +14,11 @@ class Client {
   protected $brokerVersion = 0 ;
   protected $_heartbeatIntervalMillis = 30000 ;
   protected $_callbacks = [] ;
-  protected $_listener = [] ;
+  protected $_listener ;
   function __construct($port = 17501, $host = "localhost", SocketFactory $socket_factory = null, EventFactory $event_factory = null) {
     $this->host = $host;
     $this->port = $port;
+    $this->_listener = new MultiHash() ;
 
     if($socket_factory === null) {
       $socket_factory = new SocketFactory();
@@ -77,17 +78,6 @@ class Client {
     $this->socket->write($se);
   }
 
-  function request($name, array $body = [], $block = true) {
-    $ev = new Event($name);
-    $ev->setBody($body);
-  
-    $ev->setResultRequested();
-    $this->emit($ev);
-
-    $ev = $this->listen([$name], $block);
-    return $ev;
-  }
-
   public function readJSONBlock($block = true) {
 
     $char = "";
@@ -121,7 +111,22 @@ class Client {
     return $buffer;
   }
 
-  public function listen(array $events = []) {
+  function request($name, array $body = [] ) {
+    $ev = new Event($name);
+    $ev->setBody($body);
+  
+    $ev->setResultRequested();
+    $this->emit($ev);
+
+    $ev = $this->_listen($name);
+    return $ev;
+  }
+
+  public function listen() {
+    $this->_listen(null);
+  }
+
+  private function _listen($name) {
     while(true) {
       $se = $this->readJSONBlock() ;
       $ev = $this->event_factory->eventFromJSON($se);
@@ -137,38 +142,39 @@ class Client {
           $this->emit ( $ev ) ;
           continue ;
         }
-        if ( $ev->getType() === "shutdown" ) {
-          if (isset($this->_callbacks["shutdown"])) {
-            $this->_callbacks["shutdown"] ( $ev ) ;
-          }
-          return $ev ;
-        }
       }
       $ev->_Client = $this ;
-      if (isset($this->_listener[$ev->getName()])) {
-        $this->_listener[$ev->getName()] ( $ev ) ;
-        continue ;
+      if ($name && $ev->getName() === $name ) {
+        return $ev ;
       }
-      if(in_array($ev->getName(), $events)) {
-        break;
+      $l = $this->_listener->get ( $ev->getName() ) ;
+      if ( $l ) {
+        foreach ($l as $v) {
+          $v ( $ev ) ;
+        }
       }
+      if ( $ev->getType() === "shutdown" ) {
+        break ;
+      }
+      continue ;
     }
-    return $ev; 
   }
 
-  public function on ( $eventNameList, $callback=null ) {
-    if ( is_string($eventNameList)) {
-      if ($eventNameList === 'shutdown') {
-        if ( ! $callback ) {
-          throw new \InvalidArgumentException ( "Missing callback for event: '$eventNameList'" ) ;
-        }
-        $this->_callbacks[$eventNameList] = $callback ;
-        return ;
-      }
+  public function on ( $eventNameList, $callback)
+  {
+    if ( is_string($eventNameList))
+    {
       $eventNameList = [ $eventNameList ] ;
+    }
+    if ( ! $callback )
+    {
+      throw new \InvalidArgumentException ( "Missing callback for event: '$eventNameList'" ) ;
     }
     if ( ! is_array($eventNameList) ) {
       throw new \InvalidArgumentException ( "$eventNameList must be an array of strings." ) ;
+    }
+    foreach ($eventNameList as $value) {
+      $this->_listener->put ( $value, $callback ) ;
     }
     $e = new Event ( "system", null, "addEventListener" ) ;
     $e->setValue ( "eventNameList", $eventNameList ) ;

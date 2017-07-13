@@ -8,20 +8,23 @@ require ( 'vendor/autoload.php' );
 use Gepard\Client;
 
 $cl = new Client();
-$eventNameList = ["getFileList"] ;
 
-$cl->on($eventNameList);
-$cl->on("shutdown");
-
-$fileList = [ "a.php", "b.php", "c.php" ] ;
-
-while ( true ) {
-  $ev = $cl->listen ( $eventNameList ) ;
-  echo ( "Request in\n" ) ;
-  echo ( "File list out:\n" ) ;
-  var_dump ( $fileList ) ;
-  echo ( "\n" ) ;
-  $ev->setValue ( "file_list", $fileList ) ;
-  $ev->setStatus ( 0, "success", "file-list collected" ) ;
-  $ev->sendBack() ;
+function getFileList ($e)
+{
+	$fileList = [ "a.php", "b.php", "c.php" ] ;
+  echo ( "Request in: getFileList\n" ) ;
+  echo ( "File list out:" . implode(',', $fileList) . "\n" ) ;
+  $e->setValue ( "file_list", $fileList ) ;
+  $e->setStatus ( 0, "success", "file-list collected" ) ;
+  $e->sendBack() ;
 }
+
+$cl->on("getFileList",function($e) {
+	getFileList($e);
+});
+
+$cl->on ( 'shutdown', function($e) {
+	echo ( $e ) ;
+}) ;
+
+$cl->listen() ;
