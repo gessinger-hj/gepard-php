@@ -13,7 +13,6 @@ class Client {
   protected $version = 1 ;
   protected $brokerVersion = 0 ;
   protected $_heartbeatIntervalMillis = 30000 ;
-  protected $_callbacks = [] ;
   protected $_listener ;
   function __construct($port = 17501, $host = "localhost", SocketFactory $socket_factory = null, EventFactory $event_factory = null) {
     $this->host = $host;
@@ -78,8 +77,15 @@ class Client {
     $this->socket->write($se);
   }
 
+  function close() {
+    $this->socket->close() ;
+    $this->socket = null ;
+    $this->_listener = new MultiHash();
+  }
   public function readJSONBlock($block = true) {
-
+    if (!$this->socket) {
+      return ;
+    }
     $char = "";
     $buffer = "";
 
@@ -129,6 +135,9 @@ class Client {
   private function _listen($name) {
     while(true) {
       $se = $this->readJSONBlock() ;
+      if (!$se) {
+        return ;
+      }
       $ev = $this->event_factory->eventFromJSON($se);
       if ( $ev->getName() === "system" ) {
         if ( $ev->getType() === "addEventListener" ) {

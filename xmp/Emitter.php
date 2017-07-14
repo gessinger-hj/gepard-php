@@ -9,5 +9,9 @@ use Gepard\Event;
 use Gepard\Client;
 
 $cl = new Client();
-$e = new Event("ALARM");
+$name = "ALARM";
+if ($argc > 1) {
+	$name = $argv[1];
+}
+$e = new Event($name);
 $cl->emit($e);
