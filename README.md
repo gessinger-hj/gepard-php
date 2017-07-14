@@ -21,7 +21,7 @@ This is simply done by executing the command:
 Prerequisite for this command is the installation of node and npm.
 For more information see [gepard on npm](https://www.npmjs.com/package/gepard) and [gessinger-hj/gepard on github](https://github.com/gessinger-hj/gepard).
 
-If you are interested in the python client see [](https://pypi.python.org/pypi/gepard-python)
+If you are interested in the python client see [pepard-python on pypi](https://pypi.python.org/pypi/gepard-python)
 
 # Install
 If you not yet have a composer.json create this file with the following content:
