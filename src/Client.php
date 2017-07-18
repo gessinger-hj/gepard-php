@@ -8,27 +8,31 @@ class Client {
   protected $socket;
   protected $host;
   protected $port;
-  protected $event_factory;
   protected $hostname ;
   protected $version = 1 ;
   protected $brokerVersion = 0 ;
   protected $_heartbeatIntervalMillis = 30000 ;
   protected $_listener ;
-  function __construct($port = 17501, $host = "localhost", SocketFactory $socket_factory = null, EventFactory $event_factory = null) {
+  private static $_instances = [];
+  private $key;
+  public static function getInstance($port = 17501, $host = "localhost")
+  {
+    $key = $host . ":" . $port ;
+    if (isset(Client::$_instances[$key])) {
+      return Client::$_instances[$key];
+    }
+    $instance = new Client($port,$host);
+    Client::$_instances[$key] = $instance;
+    return $instance;
+  }
+  function __construct( $port = 17501, $host = "localhost" )
+  {
+    $this->key = $host . ":" . $port;
     $this->host = $host;
     $this->port = $port;
     $this->_listener = new MultiHash() ;
 
-    if($socket_factory === null) {
-      $socket_factory = new SocketFactory();
-    }
-
-    if($event_factory === null) {
-      $this->event_factory = new EventFactory();
-    }
-    else {
-      $this->event_factory = $event_factory;
-    }
+    $socket_factory = new SocketFactory();
 
     $this->socket = $socket_factory->createClient($host.":".$port);
 
@@ -45,7 +49,7 @@ class Client {
     $client_info->setValue ( "version", $this->version ) ;
     // $client_info->setValue ( "channels", self.channels ) ; // TODO:
     $this->emit ( $client_info ) ;
-    $broker_info = $this->event_factory->eventFromJSON($this->readJSONBlock());
+    $broker_info = Event::fromJSON($this->readJSONBlock());
     if ( $broker_info->getName() === "system" && $broker_info->getType() === "broker_info" ) {
       $this->brokerVersion = $broker_info->getValue ( "brokerVersion" ) ;
       if ( $this->brokerVersion > 0 ) {
@@ -66,15 +70,22 @@ class Client {
     return gethostname() . "_" . $port . "_" . time() . "_" . Client::$counter ;
   }
 
-  public function setEventFactory(EventFactory $event_factory) {
-    $this->event_factory = $event_factory;
-  }
-
-  function emit(Event $event) {
+  function emit($event, array $body=null) {
+    if (is_string($event)) {
+      $event = new Event ( $event ) ;
+    }
+    else
+    if ( $event instanceof Event) {
+      # code...
+    }
+    if ($body) {
+      $event->setBody($body);
+    }
     $uid = $this->getUniqueId() ;
     $event->setUniqueId ( $uid ) ;
     $se = $event->toJSON();
     $this->socket->write($se);
+    return $this ;
   }
 
   function close() {
@@ -138,7 +149,7 @@ class Client {
       if (!$se) {
         return ;
       }
-      $ev = $this->event_factory->eventFromJSON($se);
+      $ev = Event::fromJSON($se);
       if ( $ev->getName() === "system" ) {
         if ( $ev->getType() === "addEventListener" ) {
           if ( $ev->isBad() ) {

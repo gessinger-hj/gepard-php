@@ -5,13 +5,28 @@ namespace Gepard;
 
 require ( 'vendor/autoload.php' );
 
-use Gepard\Event;
-use Gepard\Client;
+use Gepard;
 
-$cl = new Client();
 $name = "ALARM";
 if ($argc > 1) {
 	$name = $argv[1];
 }
+
+// Now send Event
+
+Client::getInstance()->emit($name);
+// or
+
+$client = Client::getInstance();
+
+// or
+$client->emit($name);
+
+// or
+$client->emit($name,["A" => "B"]);
+
+// or
 $e = new Event($name);
-$cl->emit($e);
+$e->setValue( "NAME", 4711 );
+$client->emit($e);
+
