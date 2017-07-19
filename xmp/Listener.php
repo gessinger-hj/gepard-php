@@ -5,9 +5,9 @@ namespace Gepard;
 
 require ( 'vendor/autoload.php' );
 
-use Gepard\Client;
+use Gepard;
 
-$client = new Client();
+$client = Client::getInstance();
 
 $client->on ( 'shutdown', function($e) {
 	echo ( $e ) ;
